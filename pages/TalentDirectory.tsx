@@ -1,20 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TalentProfile } from '../types';
 import { MapPin, Star, ShieldCheck, CheckCircle2, MessageCircle, Calendar } from 'lucide-react';
 import { store } from '../services/store';
 
 const TalentDirectory: React.FC = () => {
   const [talent, setTalent] = useState<TalentProfile[]>([]);
+  const [uniqueLocations, setUniqueLocations] = useState<string[]>([]);
   const [filterCity, setFilterCity] = useState('');
   const [smartMatchQuery, setSmartMatchQuery] = useState('');
   const [isMatching, setIsMatching] = useState(false);
   
   // State for booking feedback
   const [bookedTalent, setBookedTalent] = useState<string | null>(null);
+
+  // State for location suggestions
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    setTalent(store.getAllTalent());
+    const allTalent = store.getAllTalent();
+    setTalent(allTalent);
+    // Extract unique city names for suggestions
+    const locations = [...new Set(allTalent.map(t => t.location.split(',')[0].trim()))];
+    setUniqueLocations(locations);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+        if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
+            setShowSuggestions(false);
+        }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setFilterCity(query);
+
+    if (query.length > 0) {
+        const suggestions = uniqueLocations.filter(loc =>
+            loc.toLowerCase().startsWith(query.toLowerCase())
+        );
+        setLocationSuggestions(suggestions);
+        setShowSuggestions(suggestions.length > 0);
+    } else {
+        setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setFilterCity(suggestion);
+    setShowSuggestions(false);
+  };
 
   const handleSmartMatch = async () => {
     if (!smartMatchQuery) return;
@@ -61,21 +101,41 @@ const TalentDirectory: React.FC = () => {
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 mb-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="relative z-10">
-            <h1 className="text-3xl font-bold text-white mb-2">Find Verified Talent</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">Find Verified Models</h1>
             <p className="text-zinc-400 mb-6 max-w-xl">
-                Browse South Africa's premier directory of verified adult industry professionals. Filter by location, services, and availability.
+                Browse South Africa's premier directory of verified adult industry models. Filter by location, services, and availability.
             </p>
 
             <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 bg-black p-2 rounded-xl border border-zinc-800 flex items-center shadow-inner">
-                    <MapPin className="ml-3 text-zinc-500 w-5 h-5" />
-                    <input 
-                        type="text" 
-                        placeholder="Location (e.g., Sandton)"
-                        className="bg-transparent border-none focus:outline-none text-zinc-200 px-4 w-full py-2"
-                        value={filterCity}
-                        onChange={(e) => setFilterCity(e.target.value)}
-                    />
+                <div className="flex-1 relative">
+                    <div className="bg-black p-2 rounded-xl border border-zinc-800 flex items-center shadow-inner">
+                        <MapPin className="ml-3 text-zinc-500 w-5 h-5" />
+                        <input 
+                            type="text" 
+                            placeholder="Location (e.g., Sandton)"
+                            className="bg-transparent border-none focus:outline-none text-zinc-200 px-4 w-full py-2"
+                            value={filterCity}
+                            onChange={handleLocationChange}
+                            onFocus={handleLocationChange}
+                        />
+                    </div>
+                    {showSuggestions && (
+                        <div ref={suggestionsRef} className="absolute top-full mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-xl shadow-lg z-10 overflow-hidden animate-fade-in-up">
+                            <ul className="py-1">
+                                {locationSuggestions.map((suggestion, index) => (
+                                    <li key={index}>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSuggestionClick(suggestion)}
+                                            className="w-full text-left px-4 py-2 text-zinc-300 hover:bg-red-600/10 hover:text-red-500 transition-colors text-sm"
+                                        >
+                                            {suggestion}
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
                 <div className="flex-[2] bg-black p-2 rounded-xl border border-zinc-800 flex items-center shadow-inner">
                     <div className="relative w-full">

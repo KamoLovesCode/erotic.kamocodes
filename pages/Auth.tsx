@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, ArrowRight, CheckCircle2, Database, MailCheck } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, CheckCircle2, Database, MailCheck, AlertCircle } from 'lucide-react';
 import { UserRole } from '../types';
 import { store, generateAvatar } from '../services/store';
 
@@ -97,7 +97,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onNavigateBack }) => {
             <label className="text-sm font-medium text-zinc-300">Full Name</label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-              <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder:text-zinc-600" placeholder="John Doe" />
+              <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className={`w-full bg-zinc-900 border rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-1 transition-all placeholder:text-zinc-600 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:border-red-600 focus:ring-red-600'}`} placeholder="John Doe" />
             </div>
           </div>
         )}
@@ -106,7 +106,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onNavigateBack }) => {
           <label className="text-sm font-medium text-zinc-300">Username or Email</label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-            <input type="text" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder:text-zinc-600" placeholder="Enter your username or email" />
+            <input type="text" required value={email} onChange={(e) => setEmail(e.target.value)} className={`w-full bg-zinc-900 border rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-1 transition-all placeholder:text-zinc-600 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:border-red-600 focus:ring-red-600'}`} placeholder="Enter your username or email" />
           </div>
         </div>
 
@@ -114,7 +114,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onNavigateBack }) => {
           <label className="text-sm font-medium text-zinc-300">Password</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder:text-zinc-600" placeholder="••••••••" />
+            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={`w-full bg-zinc-900 border rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-1 transition-all placeholder:text-zinc-600 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:border-red-600 focus:ring-red-600'}`} placeholder="••••••••" />
           </div>
         </div>
 
@@ -131,7 +131,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onNavigateBack }) => {
           </div>
         )}
 
-        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+        {error && (
+            <div className="bg-red-900/50 border border-red-500/30 text-red-300 text-sm rounded-xl p-3 text-center flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span>{error}</span>
+            </div>
+        )}
 
         <button type="submit" disabled={isLoading} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-red-600/20 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">{isLoading ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <>{authMode === 'login' ? 'Sign In' : 'Create Account'}<ArrowRight className="w-5 h-5 ml-2" /></>}</button>
       </form>
@@ -147,8 +152,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onNavigateBack }) => {
         <p className="mt-2 text-zinc-400">Enter your email to receive a reset link.</p>
       </div>
       <form onSubmit={handleForgotPasswordSubmit} className="space-y-6">
-        <div className="space-y-2"><label className="text-sm font-medium text-zinc-300">Email Address</label><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" /><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder:text-zinc-600" placeholder="name@example.com" /></div></div>
-        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+        <div className="space-y-2"><label className="text-sm font-medium text-zinc-300">Email Address</label><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" /><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={`w-full bg-zinc-900 border rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:ring-1 transition-all placeholder:text-zinc-600 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:border-red-600 focus:ring-red-600'}`} placeholder="name@example.com" /></div></div>
+        {error && (
+            <div className="bg-red-900/50 border border-red-500/30 text-red-300 text-sm rounded-xl p-3 text-center flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span>{error}</span>
+            </div>
+        )}
         <button type="submit" disabled={isLoading} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-red-600/20 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">{isLoading ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <>Send Reset Link<ArrowRight className="w-5 h-5 ml-2" /></>}</button>
       </form>
       <div className="text-center"><p className="text-zinc-400 text-sm">Remember your password?{' '}<button onClick={() => resetForm('login')} className="text-white font-semibold hover:text-red-500 transition-colors">Sign In</button></p></div>

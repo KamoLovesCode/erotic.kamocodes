@@ -23,7 +23,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isOpen, onClo
             <Zap className="text-white w-5 h-5" fill="currentColor" />
           </div>
           <span className="ml-3 font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400">
-
+            Mzansis Best Ass
           </span>
         </div>
         <nav className="mt-6 px-4 space-y-2">
@@ -32,8 +32,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isOpen, onClo
               type="button"
               key={item.id}
               onClick={() => onNavigate(item.id as any)}
-              className={`w-full flex items-center justify-start px-4 py-3 rounded-xl transition-all duration-200 group ${activePage === item.id ? 'bg-red-600/10 text-red-500' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-                }`}
+              className={`w-full flex items-center justify-start px-4 py-3 rounded-xl transition-all duration-200 group ${
+                activePage === item.id ? 'bg-red-600/10 text-red-500' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+              }`}
             >
               <item.icon className={`w-6 h-6 ${activePage === item.id ? 'stroke-2' : 'stroke-1.5'}`} />
               <span className={`ml-3 font-medium ${activePage === item.id ? 'font-semibold' : ''}`}>{item.label}</span>
@@ -62,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isOpen, onClo
       <aside className="hidden sm:block flex-shrink-0">
         <SidebarContent />
       </aside>
-
+      
       {/* Mobile Sidebar */}
       <div className={`sm:hidden fixed inset-0 z-40 transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <SidebarContent />

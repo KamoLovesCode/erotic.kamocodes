@@ -106,16 +106,21 @@ class StoreService {
       this.talentProfiles = SEED_TALENT;
     }
     // Add admin user if not present
-    if (!this.users.find(u => u.role === UserRole.ADMIN)) {
+    const adminUser = this.users.find(u => u.role === UserRole.ADMIN);
+    if (!adminUser) {
       this.users.push({
         id: 'admin-user',
-        name: 'Admin',
+        name: 'admin',
         email: 'admin',
         role: UserRole.ADMIN,
         verified: true,
-        avatarUrl: generateAvatar('Admin'),
+        avatarUrl: generateAvatar('admin'),
         password: '123'
       });
+    } else {
+      adminUser.name = 'admin';
+      adminUser.email = 'admin';
+      adminUser.password = '123';
     }
     // Seed generic notifications if empty
     if (this.notifications.length === 0) {
@@ -202,6 +207,15 @@ class StoreService {
     return updatedItem;
   }
   deleteMedia = (id: string) => { this.media = this.media.filter(item => item.id !== id); this.saveToStorage(); }
+  importMedia = (items: MediaItem[]) => {
+    const mediaMap = new Map(this.media.map(item => [item.id, item]));
+    items.forEach(item => {
+      // Simple merge: new item overwrites old one with same ID
+      mediaMap.set(item.id, item);
+    });
+    this.media = Array.from(mediaMap.values());
+    this.saveToStorage();
+  }
 
   // --- Users ---
   getAllUsers = (): User[] => [...this.users];

@@ -11,6 +11,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Auth from './pages/Auth';
 import AgeGate from './components/AgeGate';
 import { store, generateAvatar } from './services/store';
+import AdminBulkImport from './pages/AdminBulkImport';
 
 const GUEST_USER: User = {
   id: 'guest',
@@ -21,7 +22,7 @@ const GUEST_USER: User = {
 };
 
 const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<'auth' | 'media' | 'directory' | 'profile' | 'view' | 'admin-dashboard'>('media');
+  const [currentPage, setCurrentPage] = useState<'auth' | 'media' | 'directory' | 'profile' | 'view' | 'admin-dashboard' | 'admin-bulk-import'>('media');
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
   const [isVerificationOpen, setIsVerificationOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -72,7 +73,12 @@ const App: React.FC = () => {
   const handleAdminNav = () => {
     setCurrentPage('admin-dashboard');
     setIsSidebarOpen(false);
-  }
+  };
+
+  const handleAdminBulkImport = () => {
+    setCurrentPage('admin-bulk-import');
+    setIsSidebarOpen(false);
+  };
 
   if (currentPage === 'auth') {
     return (
@@ -87,7 +93,7 @@ const App: React.FC = () => {
       <AgeGate />
 
       <Sidebar
-        activePage={['view', 'admin-dashboard'].includes(currentPage) ? 'media' : currentPage as any}
+        activePage={['view', 'admin-dashboard', 'admin-bulk-import'].includes(currentPage) ? 'media' : currentPage as any}
         onNavigate={handleNavigate}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -112,7 +118,8 @@ const App: React.FC = () => {
             )}
             {currentPage === 'directory' && <TalentDirectory />}
             {currentPage === 'profile' && <UserProfile user={currentUser} onMediaClick={handleMediaClick} onUserUpdate={handleUserUpdate} />}
-            {currentPage === 'admin-dashboard' && <AdminDashboard user={currentUser} />}
+            {currentPage === 'admin-dashboard' && <AdminDashboard user={currentUser} onBulkImport={handleAdminBulkImport} />}
+            {currentPage === 'admin-bulk-import' && <AdminBulkImport />}
           </div>
         </main>
       </div>

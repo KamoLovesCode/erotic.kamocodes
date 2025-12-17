@@ -60,7 +60,17 @@ app.use(morgan('dev'));
 const uploadsPath = path.resolve('server/uploads');
 app.use('/uploads', express.static(uploadsPath));
 
+// Serve static frontend (production build)
+const clientBuildPath = path.resolve('dist');
+app.use(express.static(clientBuildPath));
+
+// API routes
 app.use('/api/media', mediaRoutes);
+
+// SPA fallback: serve index.html for any unknown route (except API and uploads)
+app.get(/^\/(?!api\/|uploads\/).*/, (req, res) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+});
 
 app.use((err, _req, res, _next) => {
     console.error(err);

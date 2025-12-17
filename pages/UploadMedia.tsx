@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Upload, X, FileVideo, Wand2, DollarSign, Image as ImageIcon, Save } from 'lucide-react';
 import { User } from '../types';
 import { store } from '../services/store';
-import { mediaApi } from '../services/mediaApi';
 
 interface UploadMediaProps {
   user: User;
@@ -15,7 +14,7 @@ const UploadMedia: React.FC<UploadMediaProps> = ({ user, onCancel, onUploadCompl
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-
+  
   // Metadata
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -73,40 +72,30 @@ const UploadMedia: React.FC<UploadMediaProps> = ({ user, onCancel, onUploadCompl
     }, 1500);
   };
 
-  const handlePublish = async () => {
-    if (!file || !title) return;
+  const handlePublish = () => {
+    if (!file) return;
 
-    setIsProcessing(true);
-    setUploadProgress(0);
+    // Create a Blob URL for the session
+    const sourceUrl = URL.createObjectURL(file);
+    const mediaType = file.type.startsWith('image/') ? 'image' : 'video';
+    
+    // In a real app, you'd upload file to S3/Cloud storage here
+    store.addMedia({
+      userId: user.id,
+      title,
+      description,
+      mediaType,
+      sourceUrl,
+      thumbnailUrl: mediaType === 'image' ? sourceUrl : 'https://picsum.photos/seed/' + Date.now() + '/600/400', // Mock thumbnail for video
+      duration: mediaType === 'video' ? '00:15' : undefined,
+      creatorName: user.name,
+      creatorAvatar: user.avatarUrl,
+      tags,
+      isPremium,
+      price: isPremium ? parseFloat(price) : undefined
+    });
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('userId', user.id);
-      formData.append('title', title);
-      formData.append('description', description);
-      formData.append('mediaType', file.type.startsWith('image/') ? 'image' : 'video');
-      formData.append('creatorName', user.name);
-      formData.append('creatorAvatar', user.avatarUrl);
-      formData.append('tags', tags.join(','));
-      formData.append('isPremium', isPremium.toString());
-
-      if (isPremium && price) {
-        formData.append('price', price);
-      }
-
-      // Upload to MongoDB via API
-      await mediaApi.create(formData, (progress) => {
-        setUploadProgress(progress);
-      });
-
-      setIsProcessing(false);
-      onUploadComplete();
-    } catch (error) {
-      console.error('Upload failed:', error);
-      alert('Upload failed. Please try again.');
-      setIsProcessing(false);
-    }
+    onUploadComplete();
   };
 
   return (
@@ -124,13 +113,14 @@ const UploadMedia: React.FC<UploadMediaProps> = ({ user, onCancel, onUploadCompl
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: File Upload */}
         <div className="lg:col-span-1 space-y-4">
-          <div
-            className={`aspect-[3/4] rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-4 text-center ${dragActive
-                ? 'border-red-600 bg-red-600/5'
-                : file
-                  ? 'border-green-500/50 bg-green-500/5'
+          <div 
+            className={`aspect-[3/4] rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-4 text-center ${
+              dragActive 
+                ? 'border-red-600 bg-red-600/5' 
+                : file 
+                  ? 'border-green-500/50 bg-green-500/5' 
                   : 'border-zinc-800 bg-zinc-900 hover:border-zinc-700'
-              }`}
+            }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -138,29 +128,29 @@ const UploadMedia: React.FC<UploadMediaProps> = ({ user, onCancel, onUploadCompl
           >
             {file ? (
               <div className="w-full h-full flex flex-col items-center justify-center">
-                <p className="text-sm font-semibold text-zinc-300 mb-2">Preview</p>
-                {file.type.startsWith('image/') ? (
-                  <img src={URL.createObjectURL(file)} alt="Preview" className="w-full max-h-64 object-contain rounded-lg mb-4 shadow-lg" />
-                ) : (
-                  <FileVideo className="w-16 h-16 text-green-500 my-8" />
-                )}
-                <p className="text-sm text-zinc-300 font-medium break-all">{file.name}</p>
-                <div className="w-full bg-zinc-800 h-2 rounded-full mt-4 overflow-hidden">
-                  <div
-                    className="bg-green-500 h-full transition-all duration-300"
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
-                </div>
-                <p className="text-xs text-zinc-500 mt-2">{uploadProgress}% Uploaded</p>
-                {uploadProgress === 100 && (
-                  <button
+                 <p className="text-sm font-semibold text-zinc-300 mb-2">Preview</p>
+                 {file.type.startsWith('image/') ? (
+                    <img src={URL.createObjectURL(file)} alt="Preview" className="w-full max-h-64 object-contain rounded-lg mb-4 shadow-lg" />
+                 ) : (
+                    <FileVideo className="w-16 h-16 text-green-500 my-8" />
+                 )}
+                 <p className="text-sm text-zinc-300 font-medium break-all">{file.name}</p>
+                 <div className="w-full bg-zinc-800 h-2 rounded-full mt-4 overflow-hidden">
+                    <div 
+                      className="bg-green-500 h-full transition-all duration-300" 
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                 </div>
+                 <p className="text-xs text-zinc-500 mt-2">{uploadProgress}% Uploaded</p>
+                 {uploadProgress === 100 && (
+                   <button 
                     type="button"
                     onClick={() => { setFile(null); setUploadProgress(0); }}
                     className="text-xs text-red-500 mt-4 hover:underline"
-                  >
-                    Remove File
-                  </button>
-                )}
+                   >
+                     Remove File
+                   </button>
+                 )}
               </div>
             ) : (
               <>
@@ -181,68 +171,68 @@ const UploadMedia: React.FC<UploadMediaProps> = ({ user, onCancel, onUploadCompl
         {/* Right Column: Metadata */}
         <div className="lg:col-span-2 space-y-6">
           <div className="space-y-4 bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Content Details</h3>
-              <button
+             <div className="flex items-center justify-between">
+               <h3 className="text-lg font-semibold text-white">Content Details</h3>
+               <button 
                 type="button"
                 onClick={generateAITags}
                 disabled={isProcessing}
                 className="text-xs flex items-center text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
-              >
-                <Wand2 className="w-3 h-3 mr-1" />
-                {isProcessing ? 'Generating...' : 'Auto-fill with AI'}
-              </button>
-            </div>
+               >
+                 <Wand2 className="w-3 h-3 mr-1" />
+                 {isProcessing ? 'Generating...' : 'Auto-fill with AI'}
+               </button>
+             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-400">Title</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-1 focus:ring-red-600 focus:border-red-600 focus:outline-none transition-all"
-                placeholder="Enter a catchy title..."
-              />
-            </div>
+             <div className="space-y-2">
+               <label className="text-sm text-zinc-400">Title</label>
+               <input 
+                 type="text" 
+                 value={title}
+                 onChange={(e) => setTitle(e.target.value)}
+                 className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-1 focus:ring-red-600 focus:border-red-600 focus:outline-none transition-all"
+                 placeholder="Enter a catchy title..."
+               />
+             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-400">Description</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-1 focus:ring-red-600 focus:border-red-600 focus:outline-none transition-all h-32 resize-none"
-                placeholder="What is your content about? (18+ allowed)"
-              />
-            </div>
+             <div className="space-y-2">
+               <label className="text-sm text-zinc-400">Description</label>
+               <textarea 
+                 value={description}
+                 onChange={(e) => setDescription(e.target.value)}
+                 className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-1 focus:ring-red-600 focus:border-red-600 focus:outline-none transition-all h-32 resize-none"
+                 placeholder="What is your content about? (18+ allowed)"
+               />
+             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm text-zinc-400">Tags</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {tags.map((tag, idx) => (
-                  <span key={idx} className="bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full text-xs flex items-center">
-                    {tag}
-                    <button type="button" aria-label={`Remove tag: ${tag}`} onClick={() => setTags(tags.filter((_, i) => i !== idx))} className="ml-2 hover:text-white">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <input
-                type="text"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const val = e.currentTarget.value.trim();
-                    if (val) {
-                      setTags([...tags, val]);
-                      e.currentTarget.value = '';
-                    }
-                  }
-                }}
-                className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-sm text-white focus:ring-1 focus:ring-red-600 focus:border-red-600 focus:outline-none transition-all"
-                placeholder="Add tags (press Enter)..."
-              />
-            </div>
+             <div className="space-y-2">
+               <label className="text-sm text-zinc-400">Tags</label>
+               <div className="flex flex-wrap gap-2 mb-2">
+                 {tags.map((tag, idx) => (
+                   <span key={idx} className="bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full text-xs flex items-center">
+                     {tag}
+                     <button type="button" aria-label={`Remove tag: ${tag}`} onClick={() => setTags(tags.filter((_, i) => i !== idx))} className="ml-2 hover:text-white">
+                       <X className="w-3 h-3" />
+                     </button>
+                   </span>
+                 ))}
+               </div>
+               <input 
+                 type="text" 
+                 onKeyDown={(e) => {
+                   if (e.key === 'Enter') {
+                     e.preventDefault();
+                     const val = e.currentTarget.value.trim();
+                     if (val) {
+                       setTags([...tags, val]);
+                       e.currentTarget.value = '';
+                     }
+                   }
+                 }}
+                 className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-sm text-white focus:ring-1 focus:ring-red-600 focus:border-red-600 focus:outline-none transition-all"
+                 placeholder="Add tags (press Enter)..."
+               />
+             </div>
           </div>
 
           <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
@@ -254,11 +244,11 @@ const UploadMedia: React.FC<UploadMediaProps> = ({ user, onCancel, onUploadCompl
                 <span className="ml-3 text-sm font-medium text-zinc-300">Premium Paid Content</span>
               </label>
             </div>
-
+            
             {isPremium && (
               <div className="relative max-w-xs">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">R</span>
-                <input
+                <input 
                   type="number"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
@@ -270,22 +260,22 @@ const UploadMedia: React.FC<UploadMediaProps> = ({ user, onCancel, onUploadCompl
           </div>
 
           <div className="flex items-center justify-end space-x-4 pt-4">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-6 py-2.5 rounded-full text-zinc-400 hover:text-white transition-colors"
-            >
-              Discard
-            </button>
-            <button
-              type="button"
-              onClick={handlePublish}
-              disabled={!file || uploadProgress < 100}
-              className="bg-white text-zinc-900 px-8 py-2.5 rounded-full font-bold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-[0_0_15px_rgba(255,255,255,0.1)]"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Publish
-            </button>
+             <button 
+               type="button"
+               onClick={onCancel}
+               className="px-6 py-2.5 rounded-full text-zinc-400 hover:text-white transition-colors"
+             >
+               Discard
+             </button>
+             <button 
+               type="button"
+               onClick={handlePublish}
+               disabled={!file || uploadProgress < 100}
+               className="bg-white text-zinc-900 px-8 py-2.5 rounded-full font-bold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+             >
+               <Save className="w-4 h-4 mr-2" />
+               Publish
+             </button>
           </div>
         </div>
       </div>

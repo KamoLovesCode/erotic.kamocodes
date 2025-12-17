@@ -1,3 +1,33 @@
+// Import video data from a JSON file (bulk import)
+export const importVideosJson = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+        const data = JSON.parse(req.file.buffer.toString());
+        if (!Array.isArray(data)) {
+            return res.status(400).json({ message: 'Invalid JSON format: expected an array' });
+        }
+        // Remove _id and timestamps to avoid MongoDB conflicts
+        const sanitized = data.map(({ _id, id, createdAt, updatedAt, ...rest }) => rest);
+        const result = await Media.insertMany(sanitized, { ordered: false });
+        res.json({ message: `Imported ${result.length} videos.` });
+    } catch (err) {
+        next(err);
+    }
+};
+// Export all video media as a downloadable JSON file
+export const exportVideosJson = async (req, res, next) => {
+    try {
+        const videos = await Media.find({ mediaType: 'video' }).sort({ createdAt: -1 });
+        const filename = `videos-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Type', 'application/json');
+        res.send(JSON.stringify(videos, null, 2));
+    } catch (err) {
+        next(err);
+    }
+};
 import path from 'path';
 import Media from '../models/Media.js';
 
